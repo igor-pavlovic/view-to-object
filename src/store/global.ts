@@ -18,13 +18,13 @@ class GlobalStore {
   createScene() {
     this.scene = new THREE.Scene();
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6); // soft white light
-    ambientLight.position.set(3000, 3000, 3000);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1); // soft white light
+    ambientLight.position.set(2000, 2000, 1000);
     ambientLight.castShadow = true;
     this.scene.add(ambientLight);
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5); // white, half intensity
-    directionalLight.position.set(3000, 3000, 3000);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1); // white, half intensity
+    directionalLight.position.set(2000, 2000, 1000);
     directionalLight.target.position.set(0, 0, 0);
     directionalLight.castShadow = true;
     this.scene.add(directionalLight);
