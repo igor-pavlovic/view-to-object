@@ -13,6 +13,13 @@ function App() {
   const [to, setTo] = useState<Vec3>();
 
   useEffect(() => {
+    // Fetch all paths to buildings in the current proposal.
+    // Forma.geometry.getPathsByCategory({ category: "generic" }).then((paths) => { console.log('buildings ', paths) });
+    // Forma.geometry.getPathsByCategory({ category: "terrain" }).then((paths) => {
+    //   console.log('terrain ', paths)
+    // });
+
+
     store.createSubscription();
     store.createCameraSubscription();
     store.getAllGeometry()

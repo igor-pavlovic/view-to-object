@@ -1,6 +1,7 @@
 import { useContext, createContext } from "react";
 import * as THREE from "three";
 import { Forma } from "forma-embedded-view-sdk/auto";
+import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter.js";
 
 class GlobalStore {
   triangles = [];
@@ -8,6 +9,7 @@ class GlobalStore {
   camera: THREE.Camera = null;
   raycaster = new THREE.Raycaster();
   selectedGeometry = []
+  intersectionMaterial = new THREE.MeshBasicMaterial( { color: 0xff4400, } )
 
   setTriangles(triangles: Float32Array[]) {
     triangles.forEach((triangle) => {
@@ -41,6 +43,7 @@ class GlobalStore {
   }
 
   async getAllGeometry() {
+    
     const allGeometry = await Forma.geometry.getTriangles()
 
     const geometry = new THREE.BufferGeometry();
@@ -101,10 +104,8 @@ class GlobalStore {
     setCameraState(await Forma.camera.getCurrent());
 
     const { unsubscribe } = await Forma.camera.subscribe((cameraState) => {
-      console.log("Camera subscription", cameraState);
       setCameraState(cameraState);
     });
-
 
     return unsubscribe;
   }
@@ -116,20 +117,63 @@ class GlobalStore {
   }
 
   checkIntersection(origin: THREE.Vector3, target: THREE.Vector3) {
-    // const originTemp = new THREE.Vector3(0, 0, 0);
-    // const targetTemp = this.scene.children[0]
-
-    const directionVector = new THREE.Vector3().subVectors(target, origin).normalize();
+    const directionVector = new THREE.Vector3().subVectors(target, origin);
     this.raycaster.set(origin, directionVector);
 
     const intersected = this.raycaster.intersectObjects(this.scene.children)
-
     console.log("Intersecting: ", intersected)
+    console.log("Direction Vector: ", directionVector.length())
+    
+    const group = new THREE.Group();
 
     this.clearScene()
     intersected.forEach((intersection) => {
       this.scene.add(intersection)
-    })
+      const intersectionPoint = intersection.point.clone()
+      if (intersection.distance - directionVector.length() < 0.1) {
+        console.log("Hit Intersection: ", intersection)
+        //@ts-ignore
+        const sphere = new THREE.SphereGeometry(1, 16, 16)
+        const mesh = new THREE.Mesh(sphere, this.intersectionMaterial)
+        mesh.position.set(intersectionPoint.x, intersectionPoint.y, intersectionPoint.z)
+        group.add(mesh)
+      } else {
+        console.log("Non hit Intersection: ", intersection)
+        //@ts-ignore
+        const sphere = new THREE.SphereGeometry(1, 16, 16)
+        const mesh = new THREE.Mesh(sphere, new THREE.MeshBasicMaterial({ color: 0x0000ff }))
+        mesh.position.set(intersectionPoint.x, intersectionPoint.y, intersectionPoint.z)
+        group.add(mesh)
+      }
+    })  
+    console.log(group)
+
+    
+    this.drawGroupToFormaScene(group)
+  }
+
+  async drawGroupToFormaScene(group: THREE.Group) {
+    const exporter = new GLTFExporter()
+
+    group.matrixAutoUpdate = false;
+
+    /* prettier-ignore */
+    group.matrix.set(
+      1, 0, 0, 0,
+      0, 0, 1, 0,
+      0, -1, 0, 0,
+      0, 0, 0, 1
+    )
+
+    const resultScene = new THREE.Scene();
+    resultScene.add(group);
+    const gltf = await exporter.parseAsync(resultScene, { binary: true });
+
+    if (gltf instanceof ArrayBuffer) {
+      Forma.render.glb.add({
+        glb: gltf as ArrayBuffer,
+      });
+    }
   }
 }
 
