@@ -1,10 +1,13 @@
 import React, { useEffect } from "react";
 import "./App.css";
-import { Forma } from "forma-embedded-view-sdk/auto";
 import { createSubscription } from "./store/subscription";
-import Scene from "./components/Scene"
+import Scene from "./components/Scene";
+import { useGlobalStore } from "./store/global";
 
 function App() {
+  const store = useGlobalStore();
+  console.log(store);
+
   useEffect(() => {
     createSubscription();
   });
