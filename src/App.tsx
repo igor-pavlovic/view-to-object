@@ -43,12 +43,13 @@ function App() {
     });
   }
 
-
   return (
-    <div className="App">
+    <div className="app" >
+      <div style={{ display: 'flex', gap: '10px' }}>
       <button onClick={() => pickFrom()}>From</button>
       <button onClick={() => pickTo()}>To</button>
       <button onClick={() => intersect()}>Intersect</button>
+      </div>
       <Scene />
     </div>
   );

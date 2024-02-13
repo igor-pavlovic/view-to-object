@@ -13,8 +13,6 @@ function Scene() {
 
     var renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
-    // document.body.appendChild( renderer.domElement );
-    // use ref as a mount point of the Three.js scene instead of the document.body
 
     //@ts-ignore
     refContainer.current &&
@@ -29,7 +27,7 @@ function Scene() {
     animate();
   }, []);
 
-  return <div ref={refContainer} />;
+  return <div ref={refContainer} className="scene" />;
 }
 
 export default Scene;
