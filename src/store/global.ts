@@ -4,18 +4,13 @@ import { Forma } from "forma-embedded-view-sdk/auto";
 import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter.js";
 
 class GlobalStore {
-  triangles = [];
-  scene = null;
+  scene = new THREE.Scene();
   camera: THREE.Camera = null;
   raycaster = new THREE.Raycaster();
-  selectedGeometry = []
-  intersectionMaterial = new THREE.MeshBasicMaterial( { color: 0xff4400, } )
-
-  setTriangles(triangles: Float32Array[]) {
-    triangles.forEach((triangle) => {
-      this.triangles.push(triangle);
-    });
-  }
+  selectedGeometry: THREE.Mesh[] = []
+  material = new THREE.MeshBasicMaterial({ color: 0xffffff })
+  hitMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, })
+  missMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 })
 
   createScene() {
     this.scene = new THREE.Scene();
@@ -43,18 +38,16 @@ class GlobalStore {
   }
 
   async getAllGeometry() {
-    
-    const allGeometry = await Forma.geometry.getTriangles()
+    const triangles = await Forma.geometry.getTriangles()
+    const vertices = new Float32Array(triangles);
 
     const geometry = new THREE.BufferGeometry();
-    const vertices = new Float32Array(allGeometry);
-
     geometry.setAttribute(
       "position",
       new THREE.BufferAttribute(vertices, 3)
     );
-    const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
-    const mesh = new THREE.Mesh(geometry, material);
+
+    const mesh = new THREE.Mesh(geometry, this.material);
 
     this.scene.add(mesh)
   }
@@ -65,49 +58,49 @@ class GlobalStore {
 
       paths.forEach(async (path) => {
         const triangles = await Forma.geometry.getTriangles({ path: path });
-
-        const geometry = new THREE.BufferGeometry();
         const vertices = new Float32Array(triangles);
 
+        const geometry = new THREE.BufferGeometry();
         geometry.setAttribute(
           "position",
           new THREE.BufferAttribute(vertices, 3)
         );
-        const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-        const mesh = new THREE.Mesh(geometry, material);
+
+        const mesh = new THREE.Mesh(geometry, this.material);
 
         this.selectedGeometry.push(mesh)
-        this.scene.add(mesh)
       });
+
+      this.scene.add(...this.selectedGeometry)
     });
 
     return unsubscribe;
   }
 
   async createCameraSubscription() {
-    const setCameraState = (cameraState) => {
-      if (this.camera) {
-        this.camera.position.setX(cameraState.position.x);
-        this.camera.position.setY(cameraState.position.y);
-        this.camera.position.setZ(cameraState.position.z);
-
-        this.camera.lookAt(
-          new THREE.Vector3(
-            cameraState.target.x,
-            cameraState.target.y,
-            cameraState.target.z
-          )
-        );
-      }
-    }
-
-    setCameraState(await Forma.camera.getCurrent());
+    this.setCamera(await Forma.camera.getCurrent());
 
     const { unsubscribe } = await Forma.camera.subscribe((cameraState) => {
-      setCameraState(cameraState);
+      this.setCamera(cameraState);
     });
 
     return unsubscribe;
+  }
+
+  setCamera(cameraState) {
+    if (this.camera) {
+      this.camera.position.setX(cameraState.position.x);
+      this.camera.position.setY(cameraState.position.y);
+      this.camera.position.setZ(cameraState.position.z);
+
+      this.camera.lookAt(
+        new THREE.Vector3(
+          cameraState.target.x,
+          cameraState.target.y,
+          cameraState.target.z
+        )
+      );
+    }
   }
 
   clearScene() {
@@ -117,40 +110,70 @@ class GlobalStore {
   }
 
   checkIntersection(origin: THREE.Vector3, target: THREE.Vector3) {
+
+    const intersections = this.getIntersections(origin, target)
+    console.log("Intersecting: ", intersections)
+
     const directionVector = new THREE.Vector3().subVectors(target, origin);
-    this.raycaster.set(origin, directionVector);
-
-    const intersected = this.raycaster.intersectObjects(this.scene.children)
-    console.log("Intersecting: ", intersected)
-    console.log("Direction Vector: ", directionVector.length())
-    
-    const group = new THREE.Group();
-
-    this.clearScene()
-    intersected.forEach((intersection) => {
-      this.scene.add(intersection)
-      const intersectionPoint = intersection.point.clone()
-      if (intersection.distance - directionVector.length() < 0.1) {
-        console.log("Hit Intersection: ", intersection)
-        //@ts-ignore
-        const sphere = new THREE.SphereGeometry(1, 16, 16)
-        const mesh = new THREE.Mesh(sphere, this.intersectionMaterial)
-        mesh.position.set(intersectionPoint.x, intersectionPoint.y, intersectionPoint.z)
-        group.add(mesh)
-      } else {
-        console.log("Non hit Intersection: ", intersection)
-        //@ts-ignore
-        const sphere = new THREE.SphereGeometry(1, 16, 16)
-        const mesh = new THREE.Mesh(sphere, new THREE.MeshBasicMaterial({ color: 0x0000ff }))
-        mesh.position.set(intersectionPoint.x, intersectionPoint.y, intersectionPoint.z)
-        group.add(mesh)
-      }
-    })  
-    console.log(group)
-
-    
+    const group = this.createRenderingGroup(intersections, directionVector.length())
     this.drawGroupToFormaScene(group)
   }
+
+  getIntersections(origin: THREE.Vector3, target: THREE.Vector3) {
+    const directionVector = new THREE.Vector3().subVectors(target, origin);
+    this.raycaster.set(origin, directionVector);
+    return this.raycaster.intersectObjects(this.scene.children)
+  }
+
+  createRenderingGroup(intersections, length) {
+    const group = new THREE.Group();
+    const sphere = new THREE.SphereGeometry(1, 16, 16)
+
+    this.clearScene()
+
+    // intersections.forEach((intersection) => {
+    //   const point = intersection.point.clone()
+    //   const mesh = new THREE.Mesh(sphere)
+
+    //   if (intersection.distance - length < 0.1) {
+    //     mesh.material = this.hitMaterial
+    //     console.log("Hit Intersection: ", intersection)
+    //   } else {
+    //     console.log("Non hit Intersection: ", intersection)
+    //     mesh.material = this.missMaterial
+    //   }
+
+    //   mesh.position.set(point.x, point.y, point.z)
+    //   group.add(mesh)
+    // })
+
+
+    /*
+    get only the first dot
+    */
+
+    const point = intersections[0].point.clone()
+    const mesh = new THREE.Mesh(sphere)
+
+    if (intersections[0].distance - length < 0.1) {
+      mesh.material = this.hitMaterial
+      console.log("Hit Intersection: ", intersections)
+    } else {
+      console.log("Non hit Intersection: ", intersections)
+      mesh.material = this.missMaterial
+    }
+
+    mesh.position.set(point.x, point.y, point.z)
+    group.add(mesh)
+
+    /*
+    end getting the first dot
+    */
+
+    console.log(group)
+    return group
+  }
+
 
   async drawGroupToFormaScene(group: THREE.Group) {
     const exporter = new GLTFExporter()
