@@ -8,8 +8,8 @@ class GlobalStore {
   camera: THREE.Camera = null;
   raycaster = new THREE.Raycaster();
   selectedGeometry: THREE.Mesh[] = []
-  material = new THREE.MeshBasicMaterial({ color: 0xffffff })
-  hitMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, })
+  material = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide })
+  hitMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 })
   missMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 })
 
   createScene() {
@@ -54,7 +54,7 @@ class GlobalStore {
 
   async createSubscription() {
     const { unsubscribe } = await Forma.selection.subscribe(({ paths }) => {
-      this.clearScene();
+      this.clearSelection()
 
       paths.forEach(async (path) => {
         const triangles = await Forma.geometry.getTriangles({ path: path });
@@ -66,12 +66,11 @@ class GlobalStore {
           new THREE.BufferAttribute(vertices, 3)
         );
 
-        const mesh = new THREE.Mesh(geometry, this.material);
+        const mesh = new THREE.Mesh(geometry, this.hitMaterial);
 
+        this.scene.add(mesh)
         this.selectedGeometry.push(mesh)
-      });
-
-      this.scene.add(...this.selectedGeometry)
+      })
     });
 
     return unsubscribe;
@@ -101,6 +100,11 @@ class GlobalStore {
         )
       );
     }
+  }
+
+  clearSelection() {
+    this.clearScene()
+    this.selectedGeometry = []
   }
 
   clearScene() {
@@ -155,7 +159,7 @@ class GlobalStore {
     const point = intersections[0].point.clone()
     const mesh = new THREE.Mesh(sphere)
 
-    if (intersections[0].distance - length < 0.1) {
+    if (intersections[0].distance - length < 0.3) {
       mesh.material = this.hitMaterial
       console.log("Hit Intersection: ", intersections)
     } else {
