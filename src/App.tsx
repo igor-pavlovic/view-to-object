@@ -1,5 +1,6 @@
 import React from "react";
 import logo from "./logo.svg";
+import * as Three from "three";
 import "./App.css";
 
 function App() {
