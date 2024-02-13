@@ -8,5 +8,4 @@ export async function getFormaToken() {
   });
 
   const result = await Forma.auth.acquireTokenPopup();
-  console.log(result.accessToken);
 }

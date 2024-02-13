@@ -7,6 +7,7 @@ class GlobalStore {
   scene = null
   camera = null
   raycaster = new THREE.Raycaster();
+  selectedGeometry = []
 
   setTriangles(triangles: Float32Array[]) {
     triangles.forEach((triangle) => {
@@ -17,10 +18,14 @@ class GlobalStore {
   createScene() {
     this.scene = new THREE.Scene();
 
-    const ambientLight = new THREE.AmbientLight(0x404040); // soft white light
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6); // soft white light
+    ambientLight.position.set(3000, 3000, 3000);
+    ambientLight.castShadow = true;
     this.scene.add(ambientLight);
 
     const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5); // white, half intensity
+    directionalLight.position.set(3000, 3000, 3000);
+    directionalLight.castShadow = true;
     this.scene.add(directionalLight);
   }
 
@@ -34,6 +39,22 @@ class GlobalStore {
     this.camera.position.z = 1;
   }
 
+  async getAllGeometry() {
+    const allGeometry = await Forma.geometry.getTriangles()
+
+    const geometry = new THREE.BufferGeometry();
+    const vertices = new Float32Array(allGeometry);
+
+    geometry.setAttribute(
+      "position",
+      new THREE.BufferAttribute(vertices, 3)
+    );
+    const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const mesh = new THREE.Mesh(geometry, material);
+
+    this.scene.add(mesh)
+  }
+
   async createSubscription() {
     const { unsubscribe } = await Forma.selection.subscribe(({ paths }) => {
       this.clearScene()
@@ -43,7 +64,6 @@ class GlobalStore {
 
         const geometry = new THREE.BufferGeometry();
         const vertices = new Float32Array(triangles);
-        console.log(vertices);
 
         geometry.setAttribute(
           "position",
@@ -52,6 +72,7 @@ class GlobalStore {
         const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
         const mesh = new THREE.Mesh(geometry, material);
 
+        this.selectedGeometry.push(mesh)
         this.scene.add(mesh)
       });
     });
@@ -73,21 +94,27 @@ class GlobalStore {
   }
 
   clearScene() {
-    for (let i = this.scene.children.length - 1; i >= 0; i--) {
-      const obj = this.scene.children[i];
-      this.scene.remove(obj);
-    }
+    this.selectedGeometry.forEach((geometry) => {
+      this.scene.remove(geometry);
+    })
   }
 
-  addGeometryToScene(geometry) {
-    this.scene.add(geometry)
+  checkIntersection(origin: THREE.Vector3, target: THREE.Vector3) {
+    // const originTemp = new THREE.Vector3(0, 0, 0);
+    // const targetTemp = this.scene.children[0]
+
+    const directionVector = new THREE.Vector3().subVectors(target, origin).normalize();
+    this.raycaster.set(origin, directionVector);
+
+    const intersected = this.raycaster.intersectObjects(this.scene.children)
+
+    console.log("Intersecting: ", intersected)
+
+    this.clearScene()
+    intersected.forEach((intersection) => {
+      this.scene.add(intersection)
+    })
   }
-
-
-  // checkIntersection(origin: THREE.Vector3, target: THREE.BufferGeometry) {
-  //   this.raycaster.set(origin);
-  //   this.raycaster.intersectObject(this.scene)
-  // }
 }
 
 const globalStoreContext = createContext(new GlobalStore());
