@@ -4,8 +4,8 @@ import { Forma } from "forma-embedded-view-sdk/auto";
 
 class GlobalStore {
   triangles = [];
-  scene = null
-  camera = null
+  scene = null;
+  camera: THREE.Camera = null;
   raycaster = new THREE.Raycaster();
   selectedGeometry = []
 
@@ -57,7 +57,7 @@ class GlobalStore {
 
   async createSubscription() {
     const { unsubscribe } = await Forma.selection.subscribe(({ paths }) => {
-      this.clearScene()
+      this.clearScene();
 
       paths.forEach(async (path) => {
         const triangles = await Forma.geometry.getTriangles({ path: path });
@@ -81,15 +81,28 @@ class GlobalStore {
   }
 
   async createCameraSubscription() {
+    setCameraState(await Forma.camera.getCurrent());
+
     const { unsubscribe } = await Forma.camera.subscribe((cameraState) => {
+      console.log("Camera subscription", cameraState);
+      setCameraState(cameraState);
+    });
+
+    function setCameraState(cameraState) {
       if (this.camera) {
         this.camera.position.setX(cameraState.position.x);
         this.camera.position.setY(cameraState.position.y);
         this.camera.position.setZ(cameraState.position.z);
+
+        this.camera.lookAt(
+          new THREE.Vector3(
+            cameraState.target.x,
+            cameraState.target.y,
+            cameraState.target.z
+          )
+        );
       }
-      // this.camera.position = cameraState.position;
-      // this.camera.target = cameraState.target;
-    });
+    }
     return unsubscribe;
   }
 
