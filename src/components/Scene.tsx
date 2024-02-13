@@ -1,15 +1,15 @@
 import { useEffect, useRef, useContext } from "react";
-import * as THREE from 'three';
+import * as THREE from "three";
 import { useGlobalStore } from "../store/global";
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
 function Scene() {
   const refContainer = useRef(null);
-  const store = useGlobalStore()
+  const store = useGlobalStore();
 
   useEffect(() => {
-    store.createScene()
-    store.createCamera()
+    store.createScene();
+    store.createCamera();
 
     var renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -17,7 +17,9 @@ function Scene() {
     // use ref as a mount point of the Three.js scene instead of the document.body
 
     //@ts-ignore
-    refContainer.current && refContainer.current.children.length < 1 && refContainer.current.appendChild(renderer.domElement);
+    refContainer.current &&
+      refContainer.current.children.length < 1 &&
+      refContainer.current.appendChild(renderer.domElement);
 
     var animate = function () {
       requestAnimationFrame(animate);
@@ -27,9 +29,7 @@ function Scene() {
     animate();
   }, []);
 
-  return (
-    <div ref={refContainer} />
-  );
+  return <div ref={refContainer} />;
 }
 
-export default Scene
+export default Scene;
