@@ -8,24 +8,8 @@ function Scene() {
   const store = useGlobalStore()
 
   useEffect(() => {
-    var scene = new THREE.Scene();
-    store.setScene(scene)
-
-    const camera = new THREE.PerspectiveCamera(
-      75,
-      window.innerWidth / window.innerHeight,
-      0.1,
-      1000000
-    );
-    camera.position.z = 1;
-
-    store.setCamera(camera)
-
-    const ambientLight = new THREE.AmbientLight(0x404040); // soft white light
-    scene.add(ambientLight);
-
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5); // white, half intensity
-    scene.add(directionalLight);
+    store.createScene()
+    store.createCamera()
 
     var renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -37,7 +21,7 @@ function Scene() {
 
     var animate = function () {
       requestAnimationFrame(animate);
-      renderer.render(scene, camera);
+      renderer.render(store.scene, store.camera);
     };
 
     animate();

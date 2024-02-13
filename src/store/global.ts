@@ -4,8 +4,9 @@ import { Forma } from "forma-embedded-view-sdk/auto";
 
 class GlobalStore {
   triangles = [];
-  scene = null;
-  camera = null;
+  scene = null
+  camera = null
+  raycaster = new THREE.Raycaster();
 
   setTriangles(triangles: Float32Array[]) {
     triangles.forEach((triangle) => {
@@ -13,23 +14,30 @@ class GlobalStore {
     });
   }
 
-  setScene(scene: THREE.Scene) {
-    this.scene = scene;
+  createScene() {
+    this.scene = new THREE.Scene();
+
+    const ambientLight = new THREE.AmbientLight(0x404040); // soft white light
+    this.scene.add(ambientLight);
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5); // white, half intensity
+    this.scene.add(directionalLight);
   }
 
-  setCamera(camera: THREE.Camera) {
-    this.camera = camera;
-  }
-
-  addGeometryToScene(geometry) {
-    this.scene.add(geometry);
-
-    this.camera.lookAt(this.scene.position);
-    console.log("added geometry to scene");
+  createCamera() {
+    this.camera = new THREE.PerspectiveCamera(
+      75,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      1000000
+    );
+    this.camera.position.z = 1;
   }
 
   async createSubscription() {
     const { unsubscribe } = await Forma.selection.subscribe(({ paths }) => {
+      this.clearScene()
+
       paths.forEach(async (path) => {
         const triangles = await Forma.geometry.getTriangles({ path: path });
 
@@ -44,7 +52,7 @@ class GlobalStore {
         const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
         const mesh = new THREE.Mesh(geometry, material);
 
-        this.addGeometryToScene(mesh);
+        this.scene.add(mesh)
       });
     });
 
@@ -53,7 +61,6 @@ class GlobalStore {
 
   async createCameraSubscription() {
     const { unsubscribe } = await Forma.camera.subscribe((cameraState) => {
-      console.log("Camera subscription", cameraState);
       if (this.camera) {
         this.camera.position.setX(cameraState.position.x);
         this.camera.position.setY(cameraState.position.y);
@@ -64,6 +71,23 @@ class GlobalStore {
     });
     return unsubscribe;
   }
+
+  clearScene() {
+    for (let i = this.scene.children.length - 1; i >= 0; i--) {
+      const obj = this.scene.children[i];
+      this.scene.remove(obj);
+    }
+  }
+
+  addGeometryToScene(geometry) {
+    this.scene.add(geometry)
+  }
+
+
+  // checkIntersection(origin: THREE.Vector3, target: THREE.BufferGeometry) {
+  //   this.raycaster.set(origin);
+  //   this.raycaster.intersectObject(this.scene)
+  // }
 }
 
 const globalStoreContext = createContext(new GlobalStore());
