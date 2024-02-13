@@ -7,7 +7,8 @@ function App() {
   const store = useGlobalStore();
 
   useEffect(() => {
-    store.createSubscription()
+    store.createSubscription();
+    store.createCameraSubscription();
   });
 
   return (
