@@ -2,10 +2,16 @@ import { useContext, createContext } from "react";
 import * as THREE from "three";
 import { Forma } from "forma-embedded-view-sdk/auto";
 import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter.js";
+import { MeshSurfaceSampler } from 'three/examples/jsm/math/MeshSurfaceSampler.js';
 
 class GlobalStore {
   scene = new THREE.Scene();
-  camera: THREE.Camera = null;
+  camera = new THREE.PerspectiveCamera(
+    75,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    1000000
+  );
   raycaster = new THREE.Raycaster();
   selectedGeometry: THREE.Mesh[] = []
   material = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide })
@@ -15,25 +21,17 @@ class GlobalStore {
   createScene() {
     this.scene = new THREE.Scene();
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1); // soft white light
-    ambientLight.position.set(2000, 2000, 1000);
-    ambientLight.castShadow = true;
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.4); // soft white light
     this.scene.add(ambientLight);
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1); // white, half intensity
-    directionalLight.position.set(2000, 2000, 1000);
-    directionalLight.target.position.set(0, 0, 0);
-    directionalLight.castShadow = true;
-    this.scene.add(directionalLight);
+    // const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6); // white, half intensity
+    // directionalLight.position.set(2000, 2000, 1000);
+    // directionalLight.target.position.set(0, 0, 0);
+    // directionalLight.castShadow = true;
+    // this.scene.add(directionalLight);
   }
 
   createCamera() {
-    this.camera = new THREE.PerspectiveCamera(
-      75,
-      window.innerWidth / window.innerHeight,
-      0.1,
-      1000000
-    );
     this.camera.position.z = 1;
   }
 
@@ -50,6 +48,7 @@ class GlobalStore {
     const mesh = new THREE.Mesh(geometry, this.material);
 
     this.scene.add(mesh)
+    console.log('called all geometry')
   }
 
   async createSubscription() {
@@ -69,6 +68,7 @@ class GlobalStore {
         const mesh = new THREE.Mesh(geometry, this.hitMaterial);
 
         this.scene.add(mesh)
+        console.log('adding new geometry')
         this.selectedGeometry.push(mesh)
       })
     });
@@ -114,67 +114,44 @@ class GlobalStore {
   }
 
   checkIntersection(origin: THREE.Vector3, target: THREE.Vector3) {
+    const points = this.getRaycastingIntersections(origin, target)
+    console.log("Intersecting: ", points)
 
-    const intersections = this.getIntersections(origin, target)
-    console.log("Intersecting: ", intersections)
-
-    const directionVector = new THREE.Vector3().subVectors(target, origin);
-    const group = this.createRenderingGroup(intersections, directionVector.length())
+    const point = this.getFirstIntersection(origin, points)
+    const group = this.createRenderingGroup(point ? [point] : [])
     this.drawGroupToFormaScene(group)
   }
 
-  getIntersections(origin: THREE.Vector3, target: THREE.Vector3) {
-    const directionVector = new THREE.Vector3().subVectors(target, origin);
-    this.raycaster.set(origin, directionVector);
+  getRaycastingIntersections(origin: THREE.Vector3, target: THREE.Vector3) {
+    const direction = new THREE.Vector3().subVectors(target, origin).normalize();
+
+    const arrowHelper = new THREE.ArrowHelper(direction, origin, 50, 0xff0000);
+    this.scene.add(arrowHelper);
+
+    this.raycaster.set(origin, direction);
     return this.raycaster.intersectObjects(this.scene.children)
   }
 
-  createRenderingGroup(intersections, length) {
+  getFirstIntersection(origin, intersections) {
+    for (const intersection of intersections) {
+      if (origin.distanceTo(intersection.point) > 0.1) return intersection;
+    }
+    return null;
+  }
+
+  createRenderingGroup(points) {
     const group = new THREE.Group();
     const sphere = new THREE.SphereGeometry(1, 16, 16)
 
-    this.clearScene()
+    points.forEach(({ point }) => {
+      const mesh = new THREE.Mesh(sphere, this.hitMaterial)
+      mesh.position.set(point.x, point.y, point.z)
+      group.add(mesh)
 
-    // intersections.forEach((intersection) => {
-    //   const point = intersection.point.clone()
-    //   const mesh = new THREE.Mesh(sphere)
+      console.log('point', point)
+      console.log('mesh', mesh)
+    })
 
-    //   if (intersection.distance - length < 0.1) {
-    //     mesh.material = this.hitMaterial
-    //     console.log("Hit Intersection: ", intersection)
-    //   } else {
-    //     console.log("Non hit Intersection: ", intersection)
-    //     mesh.material = this.missMaterial
-    //   }
-
-    //   mesh.position.set(point.x, point.y, point.z)
-    //   group.add(mesh)
-    // })
-
-
-    /*
-    get only the first dot
-    */
-
-    const point = intersections[0].point.clone()
-    const mesh = new THREE.Mesh(sphere)
-
-    if (intersections[0].distance - length < 0.3) {
-      mesh.material = this.hitMaterial
-      console.log("Hit Intersection: ", intersections)
-    } else {
-      console.log("Non hit Intersection: ", intersections)
-      mesh.material = this.missMaterial
-    }
-
-    mesh.position.set(point.x, point.y, point.z)
-    group.add(mesh)
-
-    /*
-    end getting the first dot
-    */
-
-    console.log(group)
     return group
   }
 
@@ -202,6 +179,43 @@ class GlobalStore {
       });
     }
   }
+
+  getRandomPointsOnMeshSurface(mesh: THREE.Mesh, numberOfPoints: number) {
+    const sampler = new MeshSurfaceSampler(mesh).build();
+    const position = new THREE.Vector3();
+
+    const points = []
+    for (let i = 0; i < numberOfPoints; i++) {
+      points.push(sampler.sample(position));
+    }
+
+    return points
+  }
+
+  checkSelectionVisibility(origin: THREE.Vector3) {
+    this.selectedGeometry.forEach((geometry) => {
+    })
+
+
+  }
+
+  // checkMeshVisibility(origin: THREE.Vector3, target: THREE.Vector3) {
+  //   // Sample meshes
+
+  //   // For the list of points, we will check if ray intersects with anything (if the distance is the same)
+
+  //   // 
+
+  //   const intersections = this.getIntersections(origin, target)
+  //   console.log("Intersecting: ", intersections)
+
+  //   const directionVector = new THREE.Vector3().subVectors(target, origin);
+
+
+  //   const group = this.createRenderingGroup(intersections, directionVector.length())
+  //   this.drawGroupToFormaScene(group)
+  // }
+
 }
 
 const globalStoreContext = createContext(new GlobalStore());

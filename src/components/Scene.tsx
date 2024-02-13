@@ -8,16 +8,20 @@ function Scene() {
   const store = useGlobalStore();
 
   useEffect(() => {
+    console.log("useEffect Scene");
     store.createScene();
     store.createCamera();
+    store.getAllGeometry()
+    store.createSubscription();
+    store.createCameraSubscription();
 
-    var renderer = new THREE.WebGLRenderer();
+    var renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true; // Enable shadow mapping
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
     //@ts-ignore
-    refContainer.current &&
-      refContainer.current.children.length < 1 &&
-      refContainer.current.appendChild(renderer.domElement);
+    refContainer.current && refContainer.current?.children.length < 1 && refContainer.current.appendChild(renderer.domElement);
 
     var animate = function () {
       requestAnimationFrame(animate);

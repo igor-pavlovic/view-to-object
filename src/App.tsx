@@ -16,11 +16,7 @@ function App() {
     // Forma.geometry.getPathsByCategory({ category: "generic" }).then((paths) => { console.log('buildings ', paths) });
     // Forma.geometry.getPathsByCategory({ category: "terrain" }).then((paths) => {
     //   console.log('terrain ', paths)
-    // });
-
-    store.getAllGeometry()
-    store.createSubscription();
-    store.createCameraSubscription();
+    // }); 
   });
 
   const intersect = () => {
@@ -30,14 +26,14 @@ function App() {
   const pickFrom = () => {
     Forma.designTool.getPoint().then((point) => {
       console.log(point)
-      setFrom(new THREE.Vector3(point.x, point.y, point.z))
+      setFrom(new THREE.Vector3(point?.x, point?.y, point?.z))
     });
   }
 
   const pickTo = () => {
     Forma.designTool.getPoint().then((point) => {
       console.log(point)
-      setTo(new THREE.Vector3(point.x, point.y, point.z))
+      setTo(new THREE.Vector3(point?.x, point?.y, point?.z))
     });
   }
 
