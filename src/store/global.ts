@@ -25,6 +25,7 @@ class GlobalStore {
 
     const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5); // white, half intensity
     directionalLight.position.set(3000, 3000, 3000);
+    directionalLight.target.position.set(0, 0, 0);
     directionalLight.castShadow = true;
     this.scene.add(directionalLight);
   }
@@ -81,14 +82,7 @@ class GlobalStore {
   }
 
   async createCameraSubscription() {
-    setCameraState(await Forma.camera.getCurrent());
-
-    const { unsubscribe } = await Forma.camera.subscribe((cameraState) => {
-      console.log("Camera subscription", cameraState);
-      setCameraState(cameraState);
-    });
-
-    function setCameraState(cameraState) {
+    const setCameraState = (cameraState) => {
       if (this.camera) {
         this.camera.position.setX(cameraState.position.x);
         this.camera.position.setY(cameraState.position.y);
@@ -103,6 +97,15 @@ class GlobalStore {
         );
       }
     }
+
+    setCameraState(await Forma.camera.getCurrent());
+
+    const { unsubscribe } = await Forma.camera.subscribe((cameraState) => {
+      console.log("Camera subscription", cameraState);
+      setCameraState(cameraState);
+    });
+
+
     return unsubscribe;
   }
 
