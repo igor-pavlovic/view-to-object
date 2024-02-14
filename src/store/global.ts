@@ -14,7 +14,7 @@ class GlobalStore {
   );
   raycaster = new THREE.Raycaster();
   selectedGeometry: THREE.Mesh[] = [];
-  material = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  material = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide });
   originMaterial = new THREE.MeshBasicMaterial({
     color: 0x0000ff,
     opacity: 0.5,
@@ -167,17 +167,21 @@ class GlobalStore {
     const targetPoint = this.getTargetIntersection(target, intersectionPoints);
     const group = new THREE.Group();
 
-    if (point !== null) {
+    console.log(point, targetPoint)
+    debugger
+
+    if (point && targetPoint) {
+      group.add(...this.createPointMeshes([point]));
       group.add(...this.createPointMeshes([targetPoint], this.missMaterial));
       group.add(createLine([origin, targetPoint], this.missLineMaterial));
-    } else {
-      group.add(...this.createPointMeshes([targetPoint], this.hitMaterial));
-      // group.add(createLine([origin, targetPoint], this.hitLineMaterial));
     }
 
-    group.add(...this.createPointMeshes(point ? [point] : []));
+    if (!point && targetPoint) {
+      group.add(...this.createPointMeshes([targetPoint], this.hitMaterial));
+      group.add(createLine([origin, targetPoint], this.missLineMaterial));
+    }
+
     group.add(...this.createPointMeshes([origin], this.originMaterial));
-    group.add(createLine([origin, point], this.hitLineMaterial));
     this.drawGroupToFormaScene(group);
   }
 
@@ -203,6 +207,7 @@ class GlobalStore {
     const sphere = new THREE.SphereGeometry(1, 16, 16);
 
     points.forEach((point) => {
+      if (point === null) return;
       const mesh = new THREE.Mesh(sphere, material);
       mesh.position.set(point.x, point.y, point.z);
       meshes.push(mesh);
