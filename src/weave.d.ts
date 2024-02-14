@@ -20,5 +20,26 @@ declare namespace JSX {
     "weave-dot": JSX.HTMLAttributes<HTMLElement> & {
       slot?: string
     }
+    "weave-inputslider": JSX.HTMLAttributes<HTMLElement> & {
+      label?: string
+      variant?: string
+    }
+    "weave-input": JSX.HTMLAttributes<HTMLElement> & {
+      id?: string
+      value: number;
+      step: number;
+      min: number;
+      max: number;
+      unit?: string;
+      variant?: string
+    }
+    "weave-slider": JSX.HTMLAttributes<HTMLElement> & {
+      value: number;
+      step: number;
+      min: number;
+      max: number;
+      label?: string
+      variant?: string
+    }
   }
 }
