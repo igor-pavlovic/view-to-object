@@ -142,7 +142,7 @@ class GlobalStore {
       // Perform raycasting on each mesh
       const intersects: THREE.Intersection[] = [];
       mesh.raycast(raycaster, intersects);
-      console.log("intersection array", intersects);
+      console.log("Intersection array", intersects);
     });
   }
 
@@ -150,7 +150,7 @@ class GlobalStore {
     for (const intersection of intersections) {
       if (target.distanceTo(intersection.point) === 0) {
         console.log(
-          "get target intersection",
+          "Get target intersection",
           target.distanceTo(intersection.point)
         );
         return intersection.point;
@@ -166,9 +166,6 @@ class GlobalStore {
     const point = this.getFirstIntersection(origin, intersectionPoints);
     const targetPoint = this.getTargetIntersection(target, intersectionPoints);
     const group = new THREE.Group();
-
-    console.log(point, targetPoint)
-    debugger
 
     if (point && targetPoint) {
       group.add(...this.createPointMeshes([point]));
