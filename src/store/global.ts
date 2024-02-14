@@ -14,7 +14,10 @@ class GlobalStore {
   );
   raycaster = new THREE.Raycaster();
   selectedGeometry: THREE.Mesh[] = [];
-  material = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+  material = new THREE.MeshBasicMaterial({
+    color: 0xffffff,
+    side: THREE.DoubleSide,
+  });
   originMaterial = new THREE.MeshBasicMaterial({
     color: 0x0000ff,
     opacity: 0.5,
@@ -60,18 +63,18 @@ class GlobalStore {
   }
 
   async getAllGeometry(scene = this.scene) {
-    const triangles = await Forma.geometry.getTriangles()
+    const triangles = await Forma.geometry.getTriangles();
     const vertices = new Float32Array(triangles);
 
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute("position", new THREE.BufferAttribute(vertices, 3));
 
     const mesh = new THREE.Mesh(geometry, this.material);
-    mesh.castShadow = true
-    mesh.receiveShadow = true
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
 
-    scene.add(mesh)
-    console.log('Add all initial geometry')
+    scene.add(mesh);
+    console.log("Add all initial geometry");
   }
 
   async createSubscription() {
@@ -166,9 +169,6 @@ class GlobalStore {
     const point = this.getFirstIntersection(origin, intersectionPoints);
     const targetPoint = this.getTargetIntersection(target, intersectionPoints);
     const group = new THREE.Group();
-
-    console.log(point, targetPoint)
-    debugger
 
     if (point && targetPoint) {
       group.add(...this.createPointMeshes([point]));
