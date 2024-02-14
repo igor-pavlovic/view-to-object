@@ -126,17 +126,33 @@ class GlobalStore {
     });
   }
 
+  getTargetIntersection(target, intersections): THREE.Vector3 | null {
+    for (const intersection of intersections) {
+      if (target.distanceTo(intersection.point) === 0) {
+        return intersection.point;
+      }
+      if (target.distanceTo(intersection.point) <= 4) return intersection.point;
+    }
+    return null;
+  }
+
   checkIntersection(origin: THREE.Vector3, target: THREE.Vector3) {
-    const intersectionPoints = this.getRaycastingIntersections(origin, target)
-    console.log("Intersecting: ", intersectionPoints)
+    const intersectionPoints = this.getRaycastingIntersections(origin, target);
 
-    const point = this.getFirstIntersection(origin, intersectionPoints)
-
-    const group = new THREE.Group()
-    group.add(...this.createPointMeshes(point ? [point] : []))
-    group.add(...this.createPointMeshes([origin], this.originMaterial))
-    group.add(createLine([origin, point], this.hitLineMaterial))
-    this.drawGroupToFormaScene(group)
+    const point = this.getFirstIntersection(origin, intersectionPoints);
+    const targetPoint = this.getTargetIntersection(target, intersectionPoints);
+    const group = new THREE.Group();
+    if (point !== null) {
+      group.add(...this.createPointMeshes([targetPoint], this.missMaterial));
+      group.add(createLine([origin, targetPoint], this.missLineMaterial));
+    } else {
+      group.add(...this.createPointMeshes([targetPoint], this.hitMaterial));
+      // group.add(createLine([origin, targetPoint], this.hitLineMaterial));
+    }
+    group.add(...this.createPointMeshes(point ? [point] : []));
+    group.add(...this.createPointMeshes([origin], this.originMaterial));
+    group.add(createLine([origin, point], this.hitLineMaterial));
+    this.drawGroupToFormaScene(group);
   }
 
   getRaycastingIntersections(origin: THREE.Vector3, target: THREE.Vector3) {
@@ -145,7 +161,7 @@ class GlobalStore {
     return this.raycaster.intersectObjects(this.scene.children)
   }
 
-  getFirstIntersection(origin, intersections) {
+  getFirstIntersection(origin, intersections): THREE.Vector3 | null {
     for (const intersection of intersections) {
       if (origin.distanceTo(intersection.point) > 0.1) return intersection.point;
     }
@@ -153,7 +169,7 @@ class GlobalStore {
   }
 
   createPointMeshes(points, material = this.hitMaterial): THREE.Mesh[] {
-    console.log(points)
+    console.log('points ', points)
     const meshes = [];
     const sphere = new THREE.SphereGeometry(1, 16, 16)
 
@@ -206,7 +222,7 @@ class GlobalStore {
 
   checkSelectionVisibility(origin: THREE.Vector3, sampleNumber: number) {
     // Sample meshes
-    const intersectionPoints = []
+    const intersectionPoints: THREE.Vector3[] = []
 
     console.log('Started finding interesctions on the selection.')
 
@@ -219,6 +235,8 @@ class GlobalStore {
 
         if (raycastings.length > 0) {
           const point = this.getFirstIntersection(origin, raycastings)
+          // const targetPoint = this.getTargetIntersection(target, raycastings)
+          // if (targetPoint) intersectionPoints.push(targetPoint);
           if (point) intersectionPoints.push(point);
         }
       }
@@ -227,7 +245,7 @@ class GlobalStore {
     console.log('Finished finding interesctions on the selection: ', intersectionPoints)
 
     const group = new THREE.Group()
-    group.add(...this.createPointMeshes(intersectionPoints))
+    group.add(...this.createPointMeshes(intersectionPoints, this.hitMaterial))
     group.add(...this.createPointMeshes([origin], this.originMaterial))
     group.add(...createLines(origin, intersectionPoints, this.hitLineMaterial))
     
@@ -257,7 +275,7 @@ class GlobalStore {
     group.add(...this.createPointMeshes(intersectionPoints))
     group.add(...this.createPointMeshes([origin], this.originMaterial))
     group.add(...createLines(origin, intersectionPoints, this.hitLineMaterial))
-    this.drawGroupToFormaScene(group)
+    this.drawGroupToFormaScene(group)    
   }
 
 }
