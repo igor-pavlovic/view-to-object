@@ -12,7 +12,7 @@ function App() {
   const [to, setTo] = useState<THREE.Vector3>(new THREE.Vector3());
   const [samplePoints, setSamplePoints] = useState<number>(100);
 
-  const [toTarget, setToTarget] = useState<any>();
+  // const [toTarget, setToTarget] = useState<any>();
 
   const intersect = () => {
     store.checkIntersection(from, to)
@@ -38,7 +38,7 @@ function App() {
     });
   }
 
-  const pickToTarget = () => {
+/*   const pickToTarget = () => {
     const result: any = {}
     Forma.selection.getSelection().then(async (paths) => {
       console.log("paths", paths)
@@ -60,7 +60,7 @@ function App() {
       console.log("Target triangle paths", result)
 
     });
-  }
+  } */
 
   return (
     <div className="app" >
@@ -71,7 +71,6 @@ function App() {
             From
           </weave-button>
           <weave-button onClick={() => pickTo()}>To</weave-button>
-          <weave-button onClick={() => pickToTarget()}>To Target</weave-button>
         </div>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
           <span>Sampling points</span>
