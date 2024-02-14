@@ -9,8 +9,7 @@ function App() {
   const store = useGlobalStore();
   const [from, setFrom] = useState<THREE.Vector3>(new THREE.Vector3());
   const [to, setTo] = useState<THREE.Vector3>(new THREE.Vector3());
-  const [selectionSamplePoints, setSelectionSamplePoint] = useState<number>(100);
-  const [sphereSamplePoints, setSphereSamplePoint] = useState<number>(600);
+  const [samplePoints, setSamplePoints] = useState<number>(100);
 
   const [toTarget, setToTarget] = useState<any>();
 
@@ -19,11 +18,11 @@ function App() {
   }
 
   const intersectSphere = () => {
-    store.sphereCaster(from, sphereSamplePoints)
+    store.sphereCaster(from, samplePoints)
   }
 
   const intersectSelection = () => {
-    store.checkSelectionVisibility(from, selectionSamplePoints)
+    store.checkSelectionVisibility(from, samplePoints)
   }
 
   const pickFrom = () => {
@@ -73,26 +72,24 @@ function App() {
           <weave-button onClick={() => pickTo()}>To</weave-button>
           <weave-button onClick={() => pickToTarget()}>To Target</weave-button>
         </div>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+          <span>Sampling points</span>
+          <weave-inputslider style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <weave-slider value={samplePoints} step={10} min={100} max={2000} label="Sample points" variant="continuous" onInput={(e) => { setSamplePoints(e.nativeEvent.target.slider.value) }} />
+            <weave-input id="samplePoint" value={samplePoints} step={10} min={100} max={2000} variant="outlined" onInput={(e) => { setSamplePoints(e.nativeEvent.target.value) }} />
+          </weave-inputslider>
+        </div>
+
         <div style={{ height: '1px', width: '100%', borderTop: '1px solid #00000030' }} />
         <div>
           <weave-button onClick={() => intersect()}>Check point-to-point visibility</weave-button>
         </div>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
           <weave-button onClick={() => intersectSelection()}>Check visibility of the selection</weave-button>
-          <span>Sampling points</span>
-          <weave-inputslider style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
-            <weave-slider value={selectionSamplePoints} step={10} min={100} max={1000} label="Sample points" variant="continuous" onInput={(e) => { console.log(e); setSelectionSamplePoint(e.nativeEvent.target.slider.value) }} />
-            <weave-input id="samplePoint" value={selectionSamplePoints} step={10} min={100} max={1000} variant="outlined" onInput={(e) => { setSelectionSamplePoint(e.nativeEvent.target.value) }} />
-          </weave-inputslider>
         </div>
 
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
           <weave-button onClick={() => intersectSphere()}>Plot view-sphere</weave-button>
-          <span>Sampling points</span>
-          <weave-inputslider style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
-            <weave-slider value={sphereSamplePoints} step={10} min={100} max={2000} label="Sample points" variant="continuous" onInput={(e) => { console.log(e); setSphereSamplePoint(e.nativeEvent.target.slider.value) }} />
-            <weave-input id="samplePoint" value={sphereSamplePoints} step={10} min={100} max={2000} variant="outlined" onInput={(e) => { setSphereSamplePoint(e.nativeEvent.target.value) }} />
-          </weave-inputslider>
         </div>
       </div>
       <Scene />
