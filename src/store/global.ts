@@ -27,11 +27,12 @@ class GlobalStore {
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.4); // soft white light
     this.scene.add(ambientLight);
 
-    // const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6); // white, half intensity
-    // directionalLight.position.set(2000, 2000, 1000);
-    // directionalLight.target.position.set(0, 0, 0);
-    // directionalLight.castShadow = true;
-    // this.scene.add(directionalLight);
+    const directionalLight = new THREE.SpotLight(0xffffff, 1.0); // white, half intensity
+    directionalLight.position.set(2000, 2000, 1000);
+    directionalLight.target.position.set(0, 0, 0);
+    directionalLight.castShadow = true;
+    directionalLight.decay = 0;
+    this.scene.add(directionalLight);
   }
 
   createCamera() {
@@ -71,7 +72,7 @@ class GlobalStore {
         const mesh = new THREE.Mesh(geometry, this.hitMaterial);
 
         this.scene.add(mesh)
-        console.log('adding new geometry')
+        console.log('Adding new geometry')
         this.selectedGeometry.push(mesh)
       })
     });
@@ -142,6 +143,7 @@ class GlobalStore {
     const point = this.getFirstIntersection(origin, intersectionPoints);
     const targetPoint = this.getTargetIntersection(target, intersectionPoints);
     const group = new THREE.Group();
+
     if (point !== null) {
       group.add(...this.createPointMeshes([targetPoint], this.missMaterial));
       group.add(createLine([origin, targetPoint], this.missLineMaterial));
@@ -149,6 +151,7 @@ class GlobalStore {
       group.add(...this.createPointMeshes([targetPoint], this.hitMaterial));
       // group.add(createLine([origin, targetPoint], this.hitLineMaterial));
     }
+
     group.add(...this.createPointMeshes(point ? [point] : []));
     group.add(...this.createPointMeshes([origin], this.originMaterial));
     group.add(createLine([origin, point], this.hitLineMaterial));
@@ -169,7 +172,7 @@ class GlobalStore {
   }
 
   createPointMeshes(points, material = this.hitMaterial): THREE.Mesh[] {
-    console.log('points ', points)
+    console.log('Create Point Meshes: ', points)
     const meshes = [];
     const sphere = new THREE.SphereGeometry(1, 16, 16)
 
@@ -222,7 +225,8 @@ class GlobalStore {
 
   checkSelectionVisibility(origin: THREE.Vector3, sampleNumber: number) {
     // Sample meshes
-    const intersectionPoints: THREE.Vector3[] = []
+    const visiblePoints: THREE.Vector3[] = []
+    const missedPoints: THREE.Vector3[] = []
 
     console.log('Started finding interesctions on the selection.')
 
@@ -230,25 +234,30 @@ class GlobalStore {
       const points = this.getRandomPointsOnMeshSurface(mesh, sampleNumber)
 
       for (const target of points) {
-        // console.log('target ', target)
         const raycastings = this.getRaycastingIntersections(origin, target)
 
         if (raycastings.length > 0) {
           const point = this.getFirstIntersection(origin, raycastings)
-          // const targetPoint = this.getTargetIntersection(target, raycastings)
-          // if (targetPoint) intersectionPoints.push(targetPoint);
-          if (point) intersectionPoints.push(point);
+          if (point) visiblePoints.push(point);
+
+          const targetPoint = this.getTargetIntersection(target, raycastings)
+          if (point && targetPoint) missedPoints.push(targetPoint);
+          // if (!point && targetPoint) visiblePoints.push(targetPoint);
         }
       }
     }
 
-    console.log('Finished finding interesctions on the selection: ', intersectionPoints)
+    console.log('Finished finding interesctions on the selection. ')
+    console.log('Visible points: ', visiblePoints)
+    console.log('Missed points: ', missedPoints)
 
     const group = new THREE.Group()
-    group.add(...this.createPointMeshes(intersectionPoints, this.hitMaterial))
+    group.add(...this.createPointMeshes(visiblePoints, this.hitMaterial))
+    group.add(...this.createPointMeshes(missedPoints, this.missMaterial))
     group.add(...this.createPointMeshes([origin], this.originMaterial))
-    group.add(...createLines(origin, intersectionPoints, this.hitLineMaterial))
-    
+    group.add(...createLines(origin, visiblePoints, this.hitLineMaterial))
+    group.add(...createLines(origin, missedPoints, this.missLineMaterial))
+
     this.drawGroupToFormaScene(group)
   }
 
@@ -275,9 +284,8 @@ class GlobalStore {
     group.add(...this.createPointMeshes(intersectionPoints))
     group.add(...this.createPointMeshes([origin], this.originMaterial))
     group.add(...createLines(origin, intersectionPoints, this.hitLineMaterial))
-    this.drawGroupToFormaScene(group)    
+    this.drawGroupToFormaScene(group)
   }
-
 }
 
 
