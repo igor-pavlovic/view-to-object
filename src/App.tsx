@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./App.css";
 import Scene from "./components/Scene";
+
 import { useGlobalStore } from "./store/global";
 import * as THREE from "three";
 import { Forma } from "forma-embedded-view-sdk/auto";
@@ -93,6 +94,7 @@ function App() {
         </div>
       </div>
       <Scene />
+      {/* <Scene2 /> */}
     </div>
   );
 }

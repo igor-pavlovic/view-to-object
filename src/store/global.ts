@@ -59,17 +59,19 @@ class GlobalStore {
     this.camera.position.z = 1;
   }
 
-  async getAllGeometry() {
-    const triangles = await Forma.geometry.getTriangles();
+  async getAllGeometry(scene = this.scene) {
+    const triangles = await Forma.geometry.getTriangles()
     const vertices = new Float32Array(triangles);
 
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute("position", new THREE.BufferAttribute(vertices, 3));
 
     const mesh = new THREE.Mesh(geometry, this.material);
+    mesh.castShadow = true
+    mesh.receiveShadow = true
 
-    this.scene.add(mesh);
-    console.log("called all geometry");
+    scene.add(mesh)
+    console.log('Add all initial geometry')
   }
 
   async createSubscription() {
@@ -153,7 +155,7 @@ class GlobalStore {
         );
         return intersection.point;
       }
-      // if (target.distanceTo(intersection.point) <= 4) return intersection.point;
+      // if (target.distanceTo(intersection.point) <= 0.3) return intersection.point;
     }
     return null;
   }
