@@ -17,7 +17,9 @@ class GlobalStore {
   material = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide })
   originMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff, opacity: 0.5, transparent: true })
   hitMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, opacity: 0.5, transparent: true })
+  hitLineMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, opacity: 0.15, transparent: true })
   missMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00, opacity: 0.5, transparent: true })
+  missLineMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00, opacity: 0.15, transparent: true })
 
   createScene() {
     this.scene = new THREE.Scene();
@@ -117,10 +119,10 @@ class GlobalStore {
   raycastOnMesh(raycaster: THREE.Raycaster) {
     // Iterate over each mesh in the array
     this.selectedGeometry.forEach(mesh => {
-        // Perform raycasting on each mesh
-        const intersects: THREE.Intersection[] = [];
-        mesh.raycast(raycaster, intersects);
-        console.log("intersection array", intersects)
+      // Perform raycasting on each mesh
+      const intersects: THREE.Intersection[] = [];
+      mesh.raycast(raycaster, intersects);
+      console.log("intersection array", intersects)
     });
   }
 
@@ -132,6 +134,8 @@ class GlobalStore {
 
     const group = new THREE.Group()
     group.add(...this.createPointMeshes(point ? [point] : []))
+    group.add(...this.createPointMeshes([origin], this.originMaterial))
+    group.add(createLine([origin, point], this.hitLineMaterial))
     this.drawGroupToFormaScene(group)
   }
 
@@ -223,10 +227,9 @@ class GlobalStore {
 
     const group = new THREE.Group()
     group.add(...this.createPointMeshes(intersectionPoints))
-    // group.add(this.createRenderingGroup(intersections, this.missMaterial))
-
-    // group.add(this.createRenderingGroup([origin], this.originMaterial))
-    // const group = this.createRenderingGroup(intersections)
+    group.add(...this.createPointMeshes([origin], this.originMaterial))
+    group.add(...createLines(origin, intersectionPoints, this.hitLineMaterial))
+    
     this.drawGroupToFormaScene(group)
   }
 
@@ -251,6 +254,8 @@ class GlobalStore {
 
     const group = new THREE.Group();
     group.add(...this.createPointMeshes(intersectionPoints))
+    group.add(...this.createPointMeshes([origin], this.originMaterial))
+    group.add(...createLines(origin, intersectionPoints, this.hitLineMaterial))
     this.drawGroupToFormaScene(group)
   }
 
@@ -287,4 +292,13 @@ function fibonacciSphere(samples = 1, randomize = true) {
   }
 
   return points;
+}
+
+function createLines(origin: THREE.Vector3, points: THREE.Vector3[], material) {
+  return points.map((point) => createLine([origin, point], material))
+}
+
+function createLine(points: [THREE.Vector3, THREE.Vector3], material) {
+  const geometry = new THREE.BufferGeometry().setFromPoints(points);
+  return new THREE.Line(geometry, material);
 }
