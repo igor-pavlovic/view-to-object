@@ -114,6 +114,16 @@ class GlobalStore {
     })
   }
 
+  raycastOnMesh(raycaster: THREE.Raycaster) {
+    // Iterate over each mesh in the array
+    this.selectedGeometry.forEach(mesh => {
+        // Perform raycasting on each mesh
+        const intersects: THREE.Intersection[] = [];
+        mesh.raycast(raycaster, intersects);
+        console.log("intersection array", intersects)
+    });
+  }
+
   checkIntersection(origin: THREE.Vector3, target: THREE.Vector3) {
     const intersectionPoints = this.getRaycastingIntersections(origin, target)
     console.log("Intersecting: ", intersectionPoints)
