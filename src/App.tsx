@@ -10,6 +10,7 @@ function App() {
   const dummyVector = new THREE.Vector3();
   const [from, setFrom] = useState<THREE.Vector3>(dummyVector);
   const [to, setTo] = useState<THREE.Vector3>(dummyVector);
+  const [toTarget, setToTarget] = useState<any>();
 
   useEffect(() => {
     // Fetch all paths to buildings in the current proposal.
@@ -41,6 +42,30 @@ function App() {
     });
   }
 
+  const pickToTarget = () => {
+    const result : any = {}
+    Forma.selection.getSelection().then(async (paths) => {
+      console.log("paths", paths)
+      paths.forEach(async path => {
+        const pathTriangles = await Forma.geometry.getTriangles({path})
+        result[`${path}`] = pathTriangles
+        const vertices = new Float32Array(pathTriangles);
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute("position", new THREE.BufferAttribute(vertices, 3)
+        );
+
+        const mesh = new THREE.Mesh(geometry, store.material);
+        const raycast = new THREE.Raycaster();
+        const intersections = []
+        mesh.raycast(raycast, intersections)
+        console.log("intersections", intersections)
+      })
+      setToTarget(result)
+      console.log("Target triangle paths", result)
+      
+    });
+  }
+
   return (
     <div className="app" >
       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
@@ -49,6 +74,7 @@ function App() {
           From
         </weave-button>
         <weave-button onClick={() => pickTo()}>To</weave-button>
+        <weave-button onClick={() => pickToTarget()}>To Target</weave-button>
         <weave-button onClick={() => intersect()}>Intersect</weave-button>
         <weave-button onClick={() => intersectSphere()}>Intersect Sphere (just select From point and wait up to minute)</weave-button>
       </div>
