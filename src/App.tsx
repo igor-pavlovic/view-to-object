@@ -23,6 +23,10 @@ function App() {
     store.checkIntersection(from, to)
   }
 
+  const intersectSphere = () => {
+    store.sphereCaster(from)
+  }
+
   const pickFrom = () => {
     Forma.designTool.getPoint().then((point) => {
       console.log(point)
@@ -39,10 +43,14 @@ function App() {
 
   return (
     <div className="app" >
-      <div style={{ display: 'flex', gap: '10px' }}>
-        <button onClick={() => pickFrom()}>From</button>
-        <button onClick={() => pickTo()}>To</button>
-        <button onClick={() => intersect()}>Intersect</button>
+      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+        <weave-button onClick={() => pickFrom()}>
+          {/* <weave-dot slot="icon"></weave-dot> */}
+          From
+        </weave-button>
+        <weave-button onClick={() => pickTo()}>To</weave-button>
+        <weave-button onClick={() => intersect()}>Intersect</weave-button>
+        <weave-button onClick={() => intersectSphere()}>Intersect Sphere (just select From point and wait up to minute)</weave-button>
       </div>
       <Scene />
     </div>

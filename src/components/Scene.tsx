@@ -28,7 +28,7 @@ function Scene() {
       renderer.render(store.scene, store.camera);
     };
 
-    animate();
+    // animate();
   }, []);
 
   return <div ref={refContainer} className="scene" />;
