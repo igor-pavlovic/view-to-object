@@ -16,10 +16,10 @@ class GlobalStore {
   selectedGeometry: THREE.Mesh[] = []
   material = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide })
   originMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff, opacity: 0.5, transparent: true })
-  hitMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, opacity: 0.5, transparent: true })
-  hitLineMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, opacity: 0.15, transparent: true })
-  missMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00, opacity: 0.5, transparent: true })
-  missLineMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00, opacity: 0.15, transparent: true })
+  hitMaterial = new THREE.MeshBasicMaterial({ color: 0x32a852, opacity: 0.5, transparent: true })
+  hitLineMaterial = new THREE.MeshBasicMaterial({ color: 0x32a852, opacity: 0.15, transparent: true })
+  missMaterial = new THREE.MeshBasicMaterial({ color: 0xa30812, opacity: 0.5, transparent: true })
+  missLineMaterial = new THREE.MeshBasicMaterial({ color: 0xa30812, opacity: 0.15, transparent: true })
 
   createScene() {
     this.scene = new THREE.Scene();
@@ -153,6 +153,7 @@ class GlobalStore {
   }
 
   createPointMeshes(points, material = this.hitMaterial): THREE.Mesh[] {
+    console.log(points)
     const meshes = [];
     const sphere = new THREE.SphereGeometry(1, 16, 16)
 
@@ -234,8 +235,8 @@ class GlobalStore {
   }
 
 
-  sphereCaster(origin: THREE.Vector3) {
-    const samples = 960; // Number of raycasting directions
+  sphereCaster(origin: THREE.Vector3, sphereSamplePoints: number) {
+    const samples = sphereSamplePoints; // Number of raycasting directions
     const points = fibonacciSphere(samples, false); // Set to true if you want randomization
 
     const raycaster = new THREE.Raycaster();
@@ -248,7 +249,7 @@ class GlobalStore {
 
       if (intersects.length > 0) {
         const point = this.getFirstIntersection(origin, intersects)
-        if (point) intersectionPoints.push(point.point);
+        if (point) intersectionPoints.push(point);
       }
     });
 
